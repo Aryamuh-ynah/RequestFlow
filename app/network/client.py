@@ -8,7 +8,7 @@ from typing import Callable
 import pycurl
 
 from app.network.models import RequestConfig, RequestResult
-
+from app.network.timing import collect_network_timings
 
 class RequestCancelled(Exception):
     """Raised when the user cancels an active request."""
@@ -83,13 +83,16 @@ class HttpClient:
 
             if cancel_event.is_set():
                 raise RequestCancelled()
-
             status_code = int(
                 curl.getinfo(
                     pycurl.RESPONSE_CODE
                 )
             )
 
+            timings = collect_network_timings(
+                curl
+            )
+            
             effective_url = str(
                 curl.getinfo(
                     pycurl.EFFECTIVE_URL
@@ -104,14 +107,7 @@ class HttpClient:
                 or ""
             )
 
-            total_time_ms = (
-                float(
-                    curl.getinfo(
-                        pycurl.TOTAL_TIME
-                    )
-                )
-                * 1000
-            )
+            total_time_ms = timings.total_ms
 
             size_info = getattr(
                 pycurl,
@@ -155,6 +151,7 @@ class HttpClient:
                 response_size=response_size,
                 response_headers=header_text,
                 body=response_body.getvalue(),
+                timings=timings,
             )
 
         except pycurl.error as exc:

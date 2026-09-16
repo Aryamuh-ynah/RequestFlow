@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 from typing import Any
+from unittest import result
 
 from PySide6.QtCore import (
     QThread,
@@ -431,6 +432,17 @@ class MainWindow(QMainWindow):
         self.response_headers.setReadOnly(
             True
         )
+        self.timing_view = QPlainTextEdit()
+
+        self.timing_view.setReadOnly(
+            True
+        )
+
+        self.timing_view.setPlaceholderText(
+            "Network timing information "
+            "will appear after a request."
+        )
+
 
         response_tabs.addTab(
             self.response_body,
@@ -440,6 +452,11 @@ class MainWindow(QMainWindow):
         response_tabs.addTab(
             self.response_headers,
             "Response Headers",
+        )
+
+        response_tabs.addTab(
+            self.timing_view,
+            "Timing",
         )
 
         response_layout.addWidget(
@@ -489,6 +506,7 @@ class MainWindow(QMainWindow):
 
         self.response_body.clear()
         self.response_headers.clear()
+        self.timing_view.clear()
 
         self._set_running(
             True
@@ -711,6 +729,15 @@ class MainWindow(QMainWindow):
             )
         )
 
+        self.timing_view.setPlainText(
+            self._format_timings(
+                result
+            )
+        )
+
+
+
+
         self.statusBar().showMessage(
             "Finished: "
             f"{result.effective_url}"
@@ -851,6 +878,100 @@ class MainWindow(QMainWindow):
     # ------------------------------------------------------
     # Helpers
     # ------------------------------------------------------
+
+    @staticmethod
+    def _format_timings(
+        result: RequestResult,
+    ) -> str:
+        timings = result.timings
+
+        lines = [
+            "NETWORK TIMING",
+            "",
+        ]
+
+        for stage in timings.stages:
+            if stage.skipped:
+                value = "Not used"
+            else:
+                value = (
+                    f"{stage.duration_ms:.2f} ms"
+                )
+
+            lines.append(
+                f"{stage.label:<26} {value}"
+            )
+
+        lines.extend(
+            [
+                "",
+                "----------------------------------------",
+                f"{'Total':<26} "
+                f"{timings.total_ms:.2f} ms",
+            ]
+        )
+
+        if timings.primary_ip:
+            endpoint = timings.primary_ip
+
+            if timings.primary_port:
+                endpoint += (
+                    f":{timings.primary_port}"
+                )
+
+            lines.extend(
+                [
+                    "",
+                    f"Remote endpoint: {endpoint}",
+                ]
+            )
+
+        lines.extend(
+            [
+                "",
+                "CUMULATIVE LIBCURL TIMESTAMPS",
+                "",
+                (
+                    f"{'DNS complete':<26} "
+                    f"{timings.name_lookup_at_ms:.2f} ms"
+                ),
+                (
+                    f"{'TCP connected':<26} "
+                    f"{timings.connect_at_ms:.2f} ms"
+                ),
+            ]
+        )
+
+        if timings.app_connect_at_ms > 0:
+            lines.append(
+                f"{'TLS complete':<26} "
+                f"{timings.app_connect_at_ms:.2f} ms"
+            )
+
+        lines.extend(
+            [
+                (
+                    f"{'Pre-transfer':<26} "
+                    f"{timings.pre_transfer_at_ms:.2f} ms"
+                ),
+                (
+                    f"{'First byte':<26} "
+                    f"{timings.start_transfer_at_ms:.2f} ms"
+                ),
+                (
+                    f"{'Transfer complete':<26} "
+                    f"{timings.total_ms:.2f} ms"
+                ),
+            ]
+        )
+
+        return "\n".join(
+            lines
+        )
+
+
+
+
 
     @staticmethod
     def _display_body(

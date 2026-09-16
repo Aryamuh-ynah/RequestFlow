@@ -13,6 +13,38 @@ class RequestConfig:
     timeout_seconds: int = 30
 
 
+@dataclass(slots=True, frozen=True)
+class NetworkStage:
+    key: str
+    label: str
+    start_ms: float
+    end_ms: float
+    duration_ms: float
+    skipped: bool = False
+
+
+@dataclass(slots=True, frozen=True)
+class NetworkTimings:
+    dns_ms: float
+    tcp_ms: float
+    tls_ms: float
+    pre_transfer_ms: float
+    first_byte_wait_ms: float
+    download_ms: float
+    total_ms: float
+
+    name_lookup_at_ms: float
+    connect_at_ms: float
+    app_connect_at_ms: float
+    pre_transfer_at_ms: float
+    start_transfer_at_ms: float
+
+    primary_ip: str = ""
+    primary_port: int = 0
+
+    stages: tuple[NetworkStage, ...] = ()
+
+
 @dataclass(slots=True)
 class RequestResult:
     status_code: int
@@ -28,3 +60,5 @@ class RequestResult:
 
     response_headers: str
     body: bytes
+
+    timings: NetworkTimings
