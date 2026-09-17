@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import json
 from typing import Any
-from unittest import result
 
 from PySide6.QtCore import (
     QThread,
@@ -129,6 +128,7 @@ QLabel#statusBad {
 
 
 class MainWindow(QMainWindow):
+
 
     def __init__(self) -> None:
         super().__init__()
@@ -461,7 +461,10 @@ class MainWindow(QMainWindow):
             self.timing_view,
             "Timing",
         )
-
+        self.response_tabs.addTab(
+            self.flow_view,
+            "Flow",
+        )
         response_layout.addWidget(
             self.response_tabs,
             1,
@@ -1061,3 +1064,6 @@ class MainWindow(QMainWindow):
             return
 
         event.accept()
+
+
+
