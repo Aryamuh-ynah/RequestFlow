@@ -34,6 +34,8 @@ from app.network.models import (
     RequestResult,
 )
 from app.network.worker import RequestWorker
+from app.ui.flow_view import FlowPanel
+
 
 
 DARK_STYLE = """
@@ -415,7 +417,7 @@ class MainWindow(QMainWindow):
             summary
         )
 
-        response_tabs = QTabWidget()
+        self.response_tabs = QTabWidget()
 
         self.response_body = (
             QPlainTextEdit()
@@ -443,24 +445,25 @@ class MainWindow(QMainWindow):
             "will appear after a request."
         )
 
+        self.flow_view = FlowPanel()
 
-        response_tabs.addTab(
+        self.response_tabs.addTab(
             self.response_body,
             "Response Body",
         )
 
-        response_tabs.addTab(
+        self.response_tabs.addTab(
             self.response_headers,
             "Response Headers",
         )
 
-        response_tabs.addTab(
+        self.response_tabs.addTab(
             self.timing_view,
             "Timing",
         )
 
         response_layout.addWidget(
-            response_tabs,
+            self.response_tabs,
             1,
         )
 
@@ -507,6 +510,11 @@ class MainWindow(QMainWindow):
         self.response_body.clear()
         self.response_headers.clear()
         self.timing_view.clear()
+        self.flow_view.clear()
+
+
+
+
 
         self._set_running(
             True
@@ -735,7 +743,9 @@ class MainWindow(QMainWindow):
             )
         )
 
-
+        self.flow_view.set_timings(
+            result.timings
+        )
 
 
         self.statusBar().showMessage(
@@ -748,6 +758,7 @@ class MainWindow(QMainWindow):
         message: str,
     ) -> None:
 
+        self.flow_view.clear()
         self.status_label.setText(
             "Request failed"
         )
@@ -775,7 +786,7 @@ class MainWindow(QMainWindow):
     def _request_cancelled(
         self,
     ) -> None:
-
+        self.flow_view.clear()
         self.status_label.setText(
             "Cancelled"
         )
